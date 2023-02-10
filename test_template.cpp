@@ -1,5 +1,6 @@
 #include<bits/stdc++.h>
 using namespace std;
+//#define ENABLE_COLOR
 #define print(arg...) _print_all(#arg,arg);
 
 // dimension setting
@@ -29,23 +30,21 @@ PRYTYFY_DECLARE(multiset)
 PRYTYFY_DECLARE(unordered_set)
 PRYTYFY_DECLARE(map)
 PRYTYFY_DECLARE(unordered_map)
-template<typename T,typename TT>ostream& operator<<(ostream&O,const pair<T,TT> &a);
+template<typename T,typename TT> ostream& operator<<(ostream&O,const pair<T,TT> &a);
 //template<typename ...T>ostream& operator<<(ostream&O,vector<T...> &a);
 template<typename T,typename TT> void _print(const pair<T,TT> &a,const int idt = 0,typename enable_if< (Dim<pair<T,TT>>::val>1) >::type* = 0);
 //template<typename ...T> void _print(vector<T...> &a,int idt = 0,typename enable_if< (Dim<vector<T...>>::val>1) >::type* = 0);
 
-#define PRYTYFY(U,B,S,E) template<typename ...T> ostream& operator<<(ostream&O,const U<T...> &a){O<<B; int c=0; for(auto i:a) O<<(c++?S:"")<<i; return O<<E; } template<typename ...T> void _print(const U<T...> &a,const int idt,typename enable_if< (Dim<U<T...>>::val>1) >::type*){cerr<<B; int c=0; int dim = Dim<U<T...>>::val; string sep = S; for(int i=0;i<dim-1;++i) sep += "\n"; for(int i=0;i<idt+1;++i) sep += " "; for(auto i:a){cerr<<(c++?sep:""); _print(i,idt+1); } cerr<<E; }
+// M for one-dimention, N for N-dimension
+#define PRYTYFY(U,B,S,E,M,N) template<typename ...T> ostream& operator<<(ostream&O,const U<T...> &a){O<<B; int c=0; for(auto i:a) O<<(c++?S:"")<<M; return O<<E; } template<typename ...T> void _print(const U<T...> &a,const int idt,typename enable_if< (Dim<U<T...>>::val>1) >::type*){cerr<<B; int c=0; int dim = Dim<U<T...>>::val; string sep = S; for(int i=0;i<dim-1;++i) sep += "\n"; for(int i=0;i<idt+1;++i) sep += " "; for(auto i:a){cerr<<(c++?sep:"");N; } cerr<<E; }
 
-//tested
-PRYTYFY(vector,"[",", ","]")
-PRYTYFY(set,"{",", ","}")
-PRYTYFY(map,"{",", ","}")
-// untested 
-PRYTYFY(deque,"[",", ","]")
-PRYTYFY(multiset,"{",", ","}")
-PRYTYFY(unordered_set,"{",", ","}")
-PRYTYFY(unordered_map,"{",", ","}")
-
+PRYTYFY(vector,"[",", ","]",i,_print(i,idt+1););
+PRYTYFY(deque,"[",", ","]",i,_print(i,idt+1););
+PRYTYFY(set,"{",", ","}",i,_print(i,idt+1););
+PRYTYFY(multiset,"{",", ","}",i,_print(i,idt+1););
+PRYTYFY(unordered_set,"{",", ","}",i,_print(i,idt+1););
+PRYTYFY(map,"{",", ","}",i.first<<":"<<i.second,_print(i.first,idt+1); cerr<<((Dim<map<T...>>::val) > 2?":\n":":"); _print(i.second,idt+1););
+PRYTYFY(unordered_map,"{",", ","}",i.first<<":"<<i.second,_print(i.first,idt+1); cerr<<((Dim<unordered_map<T...>>::val) > 2?":\n":":"); _print(i.second,idt+1););
 /*
 PRYTYFY vector
 template<typename ...T> ostream& operator<<(ostream&O,vector<T...> &a){
@@ -97,99 +96,70 @@ void _print(const pair<T,TT> &a,const int idt,typename enable_if< (Dim<pair<T,TT
 
 template<typename ...T> 
 void _print_all(const char*s,const T&... a){
-	cerr<<s<<" = "; 
+#ifdef ENABLE_COLOR
+	cerr<<"\033[92m"<<s<<"\033[m"<<" = ";
+#else
+	cerr<<s<<" = ";
+#endif
 	int c=0; 
 	((cerr<<(c++?", ":"")<<(Dim<T>::val>1?"\n":""),_print(a,0)),...); 
 	cerr<<"\n";
 }
 
-void pair_vector_test(){
-	vector<int> vi(3,3);
-	vector<vector<int>> vvi(3,vi);
-	vector<vector<vector<int>>> vvvi(3,vvi);
-	int a = 2;
-	print(vi,2,a);
-	print(vvi,2);
-	print(vvvi);
-	cout<<Dim<pair<int,vector<vector<int>>>>::val;
-	print(pair<int,vector<vector<vector<int>>>>{2,vvvi});
-	print(pair<vector<vector<vector<int>>>,int>{vvvi,2});
-	vector<pair<int,vector<vector<vector<int>>>>> v;
-	v.push_back({2,vvvi});
-	v.push_back({2,vvvi});
-	print(v);
+void vector_demo(){
+	vector<int> one_dim(16,42);
+	vector<vector<int>> two_dim(4,vector<int>(4,42));
+	vector<vector<vector<int>>> three_dim(2,vector<vector<int>>(2,vector<int>(4,42)));
+	vector<vector<vector<vector<int>>>> four_dim(2,vector<vector<vector<int>>>(2,vector<vector<int>>(2,vector<int>(2,42))));
+	print(one_dim);
+	print(two_dim);
+	print(three_dim);
+	print(four_dim);
+	int cnt = 1;
+	vector<vector<vector<int>>>pyramid;
+	for(int i=0;i<4;++i){
+		vector<vector<int>>tmp;
+		for(int j=0;j<i+1;++j){
+			vector<int> t;
+			for(int k=0;k<i+1;++k){
+				t.push_back(cnt++);
+			}
+			tmp.push_back(t);
+		}
+		pyramid.push_back(tmp);
+	}
+	print(pyramid);
 }
 
-void map_test(){
-	map<int,int> mii;
-	for(int i=0;i<4;++i)
-		mii[i] = 7-i;
-	print(mii);
-	map<int,map<int,int>> mim;
-	mim[3] = mii;
-	mii[100] = 100;
-	mim[20] = mii;
-	print(mim);
+void sets_demo(){
+	vector<int>a({1,2,2,3,3,4});
+	set<int>s(a.begin(),a.end());
+	multiset<int>ms(a.begin(),a.end());
+	unordered_set<int>us(a.begin(),a.end());
+	print(s,ms,us);
+	multiset<set<int>>mss;
+	mss.insert(s);
+	mss.insert(s);
+	print(mss);
 }
 
-void pair_vector_map_test(){
-	vector<map<int,vector<int>>> vmv;
-	map<int,vector<int>> mv;
-	mv[42] = {69,70,71};
-	vmv.push_back(mv);
-	mv[69] = {};
-	mv[16384] = {23,34,45};
-	vmv.push_back(mv);
-	print(mv);
-	print(vmv);
-}
-
-void set_test(){
-	set<int> a({12,69});
-	print(a);
-	a.insert(23);
-	print(a);
-	set<string> ss;
-	print(ss);
-	ss.insert("hell");
-	ss.insert("hello");
-	ss.insert("word");
-	ss.insert("world");
-	print(ss);
-}
-
-void set_mix_test(){
-	set<map<int,int>> sm;
-	map<int,int> m;
-	sm.insert(m);
-	m[7122] = 69;
-	m[42] = 24;
-	sm.insert(m);
-	sm.insert(m);
-	m[7122] = 0;
-	sm.insert(m);
-	print(sm);
-
-	vector<set<vector<string>>> vsv;
-	set<vector<string>> sv;
-	sv.insert({"heeloo","wrold"});
-	vsv.push_back(sv);
-	sv.insert({"haaloo","wrold"});
-	sv.insert({"haaloo","ni jiao","shen ma ming zi"});
-	vsv.push_back(sv);
-	vsv.push_back(sv);
-	print(vsv);
-
-	map<int,set<int>> ms;
-	set<int> s;
-	s.insert(12);
-	ms[1] = s;
-	s.insert(22);
-	ms[2] = s;
-	s.insert(32);
-	ms[3] = s;
-	print(ms);
+void maps_demo(){
+	map<int,string>m;
+	unordered_map<int,string>um;
+	for(int i=0;i<5;++i){
+		m[i] = "aa"+to_string(i);
+		um[i] = "bb"+to_string(i);
+	}
+	print(m);
+	print(um);
 }
 
 signed main(){
+	print("------------------------");
+	vector_demo();
+	print("------------------------");
+	sets_demo();
+	print("------------------------");
+	maps_demo();
+	print("------------------------");
 }
