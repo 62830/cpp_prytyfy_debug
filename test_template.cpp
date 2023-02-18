@@ -44,6 +44,8 @@ template<typename ...T>
 void _print(const pair<T...> &a,const int idt,const bool from_map = false);
 
 #define PRYTYFY(U,B,S,E,PRINT) template<typename... T> void _print(const U<T...> &a,const int idt){OSTRM<<B; int c=0; int dim = Dim<U<T...>>::val; string sep = S; if(dim > 1){for(int i=0;i<dim-1;++i) sep += "\n"; for(int i=0;i<idt+1;++i) sep += " "; } for(auto i:a){OSTRM<<(c++?sep:""); PRINT; } OSTRM<<E; }
+#define PRYTYFY_PAIR(U,B,S,E,FMB,FMS,FME) template<typename ...T> void _print(const U<T...> &a,const int idt,const bool from_map){string sep; if(from_map){OSTRM<<FMB; sep = FMS;} else{OSTRM<<B; sep = S; } int dim = Dim<U<T...>>::val; if(dim > 1) sep += "\n"; for(int i=0;i<idt+1;++i) sep += " "; apply([&](T... a){int c=0; ((OSTRM<<(c++?(Dim<T>::val>1?sep:(from_map?FMS:S)):""),_print(a,idt+1) ),... ); } ,a); if(from_map) OSTRM<<FME; else OSTRM<<E; }
+#define PRYTYFY_TUPLE(U,B,S,E) template<typename ...T> void _print(const U<T...> &a,const int idt){OSTRM<<B; string sep = S; int dim = Dim<U<T...>>::val; if(dim > 1) sep += "\n"; for(int i=0;i<idt+1;++i) sep += " "; apply([&](T... a){int c=0; ((OSTRM<<(c++?(Dim<T>::val>1?sep:S):""),_print(a,idt+1) ),... ); } ,a); OSTRM<<E; }
 PRYTYFY(vector,"[",", ","]",_print(i,idt+1))
 PRYTYFY(deque,"[",", ","]",_print(i,idt+1))
 PRYTYFY(set,"{",", ","}",_print(i,idt+1))
@@ -51,13 +53,7 @@ PRYTYFY(multiset,"{",", ","}",_print(i,idt+1))
 PRYTYFY(unordered_set,"{",", ","}",_print(i,idt+1))
 PRYTYFY(map,"{",", ","}",_print(i,idt,true))
 PRYTYFY(unordered_map,"{",", ","}",_print(i,idt,true))
-
-#define PRYTYFY_PAIR(U,B,S,E,FMB,FMS,FME) template<typename ...T> void _print(const U<T...> &a,const int idt,const bool from_map){string sep; if(from_map){OSTRM<<FMB; sep = FMS;} else{OSTRM<<B; sep = S; } int dim = Dim<U<T...>>::val; if(dim > 1) sep += "\n"; for(int i=0;i<idt+1;++i) sep += " "; apply([&](T... a){int c=0; ((OSTRM<<(c++?(Dim<T>::val>1?sep:(from_map?FMS:S)):""),_print(a,idt+1) ),... ); } ,a); if(from_map) OSTRM<<FME; else OSTRM<<E; }
-
 PRYTYFY_PAIR(pair,"(",", ",")","",":","")
-
-#define PRYTYFY_TUPLE(U,B,S,E) template<typename ...T> void _print(const U<T...> &a,const int idt){OSTRM<<B; string sep = S; int dim = Dim<U<T...>>::val; if(dim > 1) sep += "\n"; for(int i=0;i<idt+1;++i) sep += " "; apply([&](T... a){int c=0; ((OSTRM<<(c++?(Dim<T>::val>1?sep:S):""),_print(a,idt+1) ),... ); } ,a); OSTRM<<E; }
-
 PRYTYFY_TUPLE(tuple,"(",", ",")")
 
 template<typename ...T> 
