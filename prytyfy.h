@@ -14,11 +14,8 @@
 
 
 #define PRYTYFY_H_ENABLE_COLOR
-//#define PRYTYFY_H_RAINBOW_MODE
-#ifdef PRYTYFY_H_RAINBOW_MODE
-#define PRYTYFY_H_ENABLE_COLOR
-#endif
-#define print(arg...); prytyfy::_print_all(#arg,arg);
+#define print(arg...) prytyfy::_print_all(#arg,arg)
+#define IDT() prytyfy::indenter __idt##__LINE__
 
 namespace prytyfy{
 
@@ -46,6 +43,8 @@ namespace prytyfy{
 		enum{val = std::max((int)Dim<S>::val,(int)Dim<std::tuple<T...>>::val)};
 	}; 
 	template<typename S,size_t T> struct Dim<std::array<S,T>>{ enum {val = 1 + Dim<S>::val}; };
+
+	template<> struct Dim<std::string>{ enum{ val = 1 }; };
 #undef DIM
 
 #define PRYTYFY_DECLARE(U)template<typename ...T> void _print(const U<T...> &a,const int idt);
@@ -64,21 +63,38 @@ namespace prytyfy{
 
 	template<typename ...T> void _print(const std::pair<T...> &a,const int idt,const bool from_map = false);
 	PRYTYFY_DECLARE(std::array);
+	void _print(const std::string &a,const int idt);
+	void _print(const char a[],const int idt);
+	void _print(const char a,const int idt);
 #undef PRYTYFY_DECLARE
 
-#ifdef PRYTYFY_H_RAINBOW_MODE
-	int rainbow = -1;
-	std::string next_color(){
-		rainbow = (++rainbow) % 6;
-		return "\033["+std::to_string(91+rainbow)+"m";
+	constexpr const char* dim2clr(int d){
+#ifdef PRYTYFY_H_ENABLE_COLOR
+		if(d <= 2)
+			return "\033[37m";
+		if(d%3 == 0)
+			return "\033[1;32m";
+		if(d%3 == 1)
+			return "\033[1;33m";
+		if(d%3 == 2)
+			return "\033[1;35m";
+#else
+		return "";
+#endif
 	}
+
+#ifdef PRYTYFY_H_ENABLE_COLOR
+	const char* __rst_clr = "\033[m";
+#else
+	const char* __rst_clr = "";
 #endif
 
 #define PRYTYFY(U,B,S,E,PRINT) template<typename... T> \
 	void _print(const U<T...> &a,const int idt){ \
-		std::cerr<<B; \
-	   	int c=0; \
 	   	const int dim = Dim<U<T...>>::val; \
+		const char* be_clr = dim2clr(dim); \
+		std::cerr<<be_clr<<B<<__rst_clr; \
+	   	int c=0; \
 	   	std::string sep = S; \
 	   	if(dim > 1){ \
 			for(int i=0;i<dim-1;++i) \
@@ -90,7 +106,7 @@ namespace prytyfy{
 			std::cerr<<(c++?sep:""); \
 		   	PRINT; \
 	   	} \
-		std::cerr<<E; \
+		std::cerr<<be_clr<<E<<__rst_clr; \
 	}
 	template<typename T> void _print(const T &a,const int idt){std::cerr<<a; }
 	PRYTYFY(std::vector,"[",", ","]",_print(i,idt+1))
@@ -101,10 +117,11 @@ namespace prytyfy{
 	PRYTYFY(std::unordered_multiset,"{",", ","}",_print(i,idt+1))
 	template<typename... T>
 	void _print(const std::priority_queue<T...> &a,const int idt){
-		const std::string B = "<",S = ", ",E = ">";
-		std::cerr<<B;
-	   	int c=0;
 	   	const int dim = Dim<std::priority_queue<T...>>::val;
+		const std::string B = "<",S = ", ",E = ">";
+		const char* be_clr = dim2clr(dim);
+		std::cerr<<be_clr<<B<<__rst_clr;
+	   	int c=0;
 		std::string sep = S;
 	   	if(dim > 1){
 			for(int i=0;i<dim-1;++i)
@@ -118,7 +135,7 @@ namespace prytyfy{
 		   	_print(b.top(),idt+1);
 		   	b.pop();
 	   	}
-		std::cerr<<E;
+		std::cerr<<be_clr<<E<<__rst_clr;
    	}
 
 	PRYTYFY(std::map,"{",", ","}",_print(i,idt,true))
@@ -180,9 +197,10 @@ namespace prytyfy{
 	template<typename T,size_t ST> 
 	void _print(const std::array<T,ST> &a,const int idt){ 
 		const std::string B = "[",S = ", ",E = "]";
-		std::cerr<<B; 
-	   	int c=0; 
 	   	const int dim = Dim<std::array<T,ST>>::val; 
+		const char* be_clr = dim;
+		std::cerr<<be_clr<<B<<__rst_clr;
+	   	int c=0; 
 	   	std::string sep = S; 
 	   	if(dim > 1){ 
 			for(int i=0;i<dim-1;++i) 
@@ -194,36 +212,46 @@ namespace prytyfy{
 			std::cerr<<(c++?sep:""); 
 			_print(i,idt+1);
 	   	} 
-		std::cerr<<E; 
+		std::cerr<<be_clr<<E<<__rst_clr;
+	}
+
+	void _print(const std::string &a,const int idt){ 
+		const std::string B = "\"",E = "\"";
+		std::cerr<<B<<a<<E;
+	}
+
+	void _print(const char a[],const int idt){
+		const std::string B = "\"",E = "\"";
+		std::cerr<<B<<a<<E;
+	}
+
+	void _print(const char a,const int idt){
+		const std::string B = "'",E = "'";
+		std::cerr<<B<<a<<E;
 	}
 
 #undef PRYTYFY
 
+	int __idt_level = 0;
+	struct indenter{
+		indenter(){std::cerr<<"{\n";++__idt_level;}
+		~indenter(){std::cerr<<"}\n";--__idt_level;}
+	};
+
 	template<typename ...T>
 	void _print_all(const char*s,const T&... a){
-#ifdef PRYTYFY_H_RAINBOW_MODE
-		std::cerr<<next_color()
-			<<s
-			<<next_color()<<" = ";
-#elif defined(PRYTYFY_H_ENABLE_COLOR)
-		std::cerr<<"\033[92m"<<s<<"\033[m"<<" = ";
+		std::string idt = "";
+		for(int i=0;i<__idt_level;++i)
+			idt += "    ";
+		std::cerr<<idt;
+#ifdef PRYTYFY_H_ENABLE_COLOR
+		std::cerr<<"\033[92m"<<s<<__rst_clr<<" = ";
 #else
 		std::cerr<<s<<" = ";
 #endif
-
-#ifdef PRYTYFY_H_RAINBOW_MODE
 		int c=0;
-		((std::cerr<<"\033[m"
-		  <<(c++?", ":"")
-		  <<next_color()
-		  <<(Dim<T>::val>1?"\n":""),
-		  _print(a,0)),...);
-		std::cerr<<"\n"<<"\033[m";
-#else
-		int c=0;
-		((std::cerr<<(c++?", ":"")<<(Dim<T>::val>1?"\n":""),_print(a,0)),...);
+		((std::cerr<<(c++?", ":"")<<(Dim<T>::val>1?"\n"+idt:""),_print(a,4*__idt_level)),...);
 		std::cerr<<"\n";
-#endif
 	}
 }
 
