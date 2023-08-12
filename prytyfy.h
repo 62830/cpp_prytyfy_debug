@@ -10,11 +10,10 @@
 #include<unordered_map>
 #include<string>
 #include<array>
-//#include "prytyfy_arr.h"
-
 
 #define PRYTYFY_H_ENABLE_COLOR
 #define print(arg...) prytyfy::_print_all(#arg,arg)
+#define print_arr(arr,arg...) prytyfy::_print_arr(#arr, #arg, arr, ##arg)
 #define IDT() prytyfy::indenter __idt##__LINE__
 
 namespace prytyfy{
@@ -45,28 +44,9 @@ namespace prytyfy{
 	template<typename S,size_t T> struct Dim<std::array<S,T>>{ enum {val = 1 + Dim<S>::val}; };
 
 	template<> struct Dim<std::string>{ enum{ val = 1 }; };
+
+	template<typename S,int T> struct Dim<S[T]>{ enum{val = 1 + Dim<S>::val}; };
 #undef DIM
-
-#define PRYTYFY_DECLARE(U)template<typename ...T> void _print(const U<T...> &a,const int idt);
-	template<typename T> void _print(const T &a,const int idt);
-	PRYTYFY_DECLARE(std::vector);
-	PRYTYFY_DECLARE(std::deque);
-	PRYTYFY_DECLARE(std::set);
-	PRYTYFY_DECLARE(std::multiset);
-	PRYTYFY_DECLARE(std::unordered_set);
-	PRYTYFY_DECLARE(std::unordered_multiset);
-	PRYTYFY_DECLARE(std::priority_queue);
-
-	PRYTYFY_DECLARE(std::map);
-	PRYTYFY_DECLARE(std::unordered_map);
-	PRYTYFY_DECLARE(std::unordered_multimap);
-
-	template<typename ...T> void _print(const std::pair<T...> &a,const int idt,const bool from_map = false);
-	PRYTYFY_DECLARE(std::array);
-	void _print(const std::string &a,const int idt);
-	void _print(const char a[],const int idt);
-	void _print(const char a,const int idt);
-#undef PRYTYFY_DECLARE
 
 	constexpr const char* dim2clr(int d){
 #ifdef PRYTYFY_H_ENABLE_COLOR
@@ -89,6 +69,36 @@ namespace prytyfy{
 	const char* __rst_clr = "";
 #endif
 
+#define PRYTYFY_DECLARE(U)template<typename ...T> void _print(const U<T...> &a,const int idt);
+	template<typename T> void _print(const T &a,const int idt);
+	PRYTYFY_DECLARE(std::vector);
+	PRYTYFY_DECLARE(std::deque);
+	PRYTYFY_DECLARE(std::set);
+	PRYTYFY_DECLARE(std::multiset);
+	PRYTYFY_DECLARE(std::unordered_set);
+	PRYTYFY_DECLARE(std::unordered_multiset);
+	PRYTYFY_DECLARE(std::priority_queue);
+
+	PRYTYFY_DECLARE(std::map);
+	PRYTYFY_DECLARE(std::unordered_map);
+	PRYTYFY_DECLARE(std::unordered_multimap);
+
+	template<typename ...T> void _print(const std::pair<T...> &a,const int idt,const bool from_map = false);
+	PRYTYFY_DECLARE(std::tuple);
+	PRYTYFY_DECLARE(std::array);
+	void _print(const std::string &a,const int idt);
+	void _print(const char a[],const int idt);
+	void _print(const char a,const int idt);
+
+	template<typename T,int L>
+	void _print(const T (&a)[L],const int idt);
+	template<typename T,int L, typename S0>
+	void _print(const T (&a)[L],const int idt,S0 sz);
+	template<typename T,int L, typename S0, typename... ST>
+	void _print(const T (&a)[L],const int idt,S0 sz, ST... size);
+
+#undef PRYTYFY_DECLARE
+
 #define PRYTYFY(U,B,S,E,PRINT) template<typename... T> \
 	void _print(const U<T...> &a,const int idt){ \
 	   	const int dim = Dim<U<T...>>::val; \
@@ -108,6 +118,7 @@ namespace prytyfy{
 	   	} \
 		std::cerr<<be_clr<<E<<__rst_clr; \
 	}
+
 	template<typename T> void _print(const T &a,const int idt){std::cerr<<a; }
 	PRYTYFY(std::vector,"[",", ","]",_print(i,idt+1))
 	PRYTYFY(std::deque,"[",", ","]",_print(i,idt+1))
@@ -193,12 +204,11 @@ namespace prytyfy{
 		std::cerr<<E;
 	}
 
-
 	template<typename T,size_t ST> 
 	void _print(const std::array<T,ST> &a,const int idt){ 
 		const std::string B = "[",S = ", ",E = "]";
 	   	const int dim = Dim<std::array<T,ST>>::val; 
-		const char* be_clr = dim;
+		const char* be_clr = dim2clr(dim);
 		std::cerr<<be_clr<<B<<__rst_clr;
 	   	int c=0; 
 	   	std::string sep = S; 
@@ -230,6 +240,58 @@ namespace prytyfy{
 		std::cerr<<B<<a<<E;
 	}
 
+	template<typename T,int L>
+	void _print(const T (&a)[L],const int idt){
+		_print(a,idt,L);
+	}
+
+	template<typename T,int L, typename S0>
+	void _print(const T (&a)[L],const int idt,S0 sz){
+	   	const int dim = Dim<T[L]>::val; 
+		const char* be_clr = dim2clr(dim); 
+		const std::string B = "[", S = ", ", E = "]";
+		std::cerr<<be_clr<<B<<__rst_clr; 
+	   	int c=0; 
+	   	std::string sep = S; 
+	   	if(dim > 1){ 
+			for(int i=0;i<dim-1;++i) 
+				sep += "\n"; 
+		   	for(int i=0;i<idt+1;++i) 
+				sep += " "; 
+	   	} 
+		if(sz == -1)
+			sz = L;
+	   	for(int i=0;i<sz;++i){ 
+			std::cerr<<(c++?sep:""); 
+		   	_print(a[i],idt+1); 
+	   	} 
+		std::cerr<<be_clr<<E<<__rst_clr;
+	}
+
+	template<typename T,int L, typename S0, typename... ST>
+	void _print(const T (&a)[L],const int idt,S0 sz, ST... size){
+	   	const int dim = Dim<T[L]>::val; 
+		const char* be_clr = dim2clr(dim); 
+		const std::string B = "[", S = ", ", E = "]";
+		std::cerr<<be_clr<<B<<__rst_clr; 
+	   	int c=0; 
+	   	std::string sep = S; 
+	   	if(dim > 1){ 
+			for(int i=0;i<dim-1;++i) 
+				sep += "\n"; 
+		   	for(int i=0;i<idt+1;++i) 
+				sep += " "; 
+	   	} 
+		if(sz == -1)
+			sz = L;
+	   	for(int i=0;i<sz;++i){ 
+			std::cerr<<(c++?sep:""); 
+		   	_print(a[i],idt+1,size...); 
+	   	} 
+		std::cerr<<be_clr<<E<<__rst_clr;
+	}
+
+
 #undef PRYTYFY
 
 	int __idt_level = 0;
@@ -251,6 +313,30 @@ namespace prytyfy{
 #endif
 		int c=0;
 		((std::cerr<<(c++?", ":"")<<(Dim<T>::val>1?"\n"+idt:""),_print(a,4*__idt_level)),...);
+		std::cerr<<"\n";
+	}
+
+
+	template<typename T,typename... ST>
+	void _print_arr(const char*s, const char*t, const T&a, ST... size){
+		std::string idt = "";
+		for(int i=0;i<__idt_level;++i)
+			idt += "    ";
+		std::cerr<<idt;
+#ifdef PRYTYFY_H_ENABLE_COLOR
+		std::cerr<<"\033[92m"<<s;
+		if(t[0] != '\0')
+			std::cerr<<"{"<<t<<"}";
+		std::cerr<<__rst_clr<<" = ";
+#else
+		std::cerr<<s;
+		if(t[0] != '\0')
+			std::cerr<<"{"<<t<<"}";
+		std::cerr<<" = ";
+#endif
+		std::cerr<<(Dim<T>::val>1?"\n"+idt:"");
+
+		_print(a,4*__idt_level,size...);
 		std::cerr<<"\n";
 	}
 }
