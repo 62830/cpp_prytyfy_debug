@@ -46,6 +46,7 @@ namespace prytyfy{
 	template<> struct Dim<std::string>{ enum{ val = 1 }; };
 
 	template<typename S,int T> struct Dim<S[T]>{ enum{val = 1 + Dim<S>::val}; };
+	DIM(std::valarray);
 #undef DIM
 
 	constexpr const char* dim2clr(int d){
@@ -97,6 +98,7 @@ namespace prytyfy{
 	template<typename T,int L, typename S0, typename... ST>
 	void _print(const T (&a)[L],const int idt,S0 sz, ST... size);
 
+	PRYTYFY_DECLARE(std::valarray);
 #undef PRYTYFY_DECLARE
 
 #define PRYTYFY(U,B,S,E,PRINT) template<typename... T> \
@@ -291,13 +293,16 @@ namespace prytyfy{
 		std::cerr<<be_clr<<E<<__rst_clr;
 	}
 
+	PRYTYFY(std::valarray,"[",", ","]",_print(i,idt+1))
 
 #undef PRYTYFY
 
 	int __idt_level = 0;
 	struct indenter{
-		indenter(){std::cerr<<"{\n";++__idt_level;}
-		~indenter(){std::cerr<<"}\n";--__idt_level;}
+		//indenter(){std::cerr<<"{\n";++__idt_level;}
+		//~indenter(){std::cerr<<"}\n";--__idt_level;}
+		indenter(){++__idt_level;}
+		~indenter(){--__idt_level;}
 	};
 
 	template<typename ...T>
